@@ -5,15 +5,33 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
+
+#include <linux/kprobes.h>
+#include <asm/traps.h>
+
 #include "bitmap.h"
 #include "simplefs.h"
 
 static const struct inode_operations simplefs_inode_ops;
 static const struct inode_operations symlink_inode_ops;
 
+void printBytes(unsigned char *address, int size) {
+    int count;
+    printk("printBytes: ");
+    for (count = 0; count < size; count+=16){
+        printk("%x%x, %x%x, %x%x, %x%x, %x%x, %x%x, %x%x, %x%x",
+               address[count],address[count+1],address[count+2], address[count+3],
+               address[count+4],address[count+5],address[count+6], address[count+7],
+               address[count+8],address[count+9],address[count+10], address[count+11],
+               address[count+12],address[count+13],address[count+14], address[count+15]);
+    }
+}
+
+
 /* Get inode ino from disk */
 struct inode *simplefs_iget(struct super_block *sb, unsigned long ino)
 {
+    printk("simplefs_iget");
     struct inode *inode = NULL;
     struct simplefs_inode *cinode = NULL;
     struct simplefs_inode_info *ci = NULL;
@@ -37,6 +55,9 @@ struct inode *simplefs_iget(struct super_block *sb, unsigned long ino)
         return inode;
 
     ci = SIMPLEFS_INODE(inode);
+    //printk("Before:");
+    //printBytes((unsigned char *)ci, 320);   
+ 
     /* Read inode from disk and initialize */
     bh = sb_bread(sb, inode_block);
     if (!bh) {
@@ -63,6 +84,7 @@ struct inode *simplefs_iget(struct super_block *sb, unsigned long ino)
     inode->i_blocks = le32_to_cpu(cinode->i_blocks);
     set_nlink(inode, le32_to_cpu(cinode->i_nlink));
 
+
     if (S_ISDIR(inode->i_mode)) {
         ci->dir_block = le32_to_cpu(cinode->dir_block);
         inode->i_fop = &simplefs_dir_ops;
@@ -75,6 +97,11 @@ struct inode *simplefs_iget(struct super_block *sb, unsigned long ino)
         inode->i_link = ci->i_data;
         inode->i_op = &symlink_inode_ops;
     }
+
+    //printk("After:");
+    //printBytes((unsigned char *)ci, 320);
+
+    printk("block: %u", ci->dir_block);
 
     brelse(bh);
 
@@ -98,6 +125,7 @@ static struct dentry *simplefs_lookup(struct inode *dir,
                                       struct dentry *dentry,
                                       unsigned int flags)
 {
+    printk("simplefs_lookup");
     struct super_block *sb = dir->i_sb;
     struct simplefs_inode_info *ci_dir = SIMPLEFS_INODE(dir);
     struct inode *inode = NULL;
@@ -148,6 +176,7 @@ static struct inode *simplefs_new_inode(struct inode *dir, mode_t mode)
     uint32_t ino, bno;
     int ret;
 
+    printk("simplefs_new_inode");
     /* Check mode before doing anything to avoid undoing everything */
     if (!S_ISDIR(mode) && !S_ISREG(mode) && !S_ISLNK(mode)) {
         pr_err(
@@ -164,6 +193,7 @@ static struct inode *simplefs_new_inode(struct inode *dir, mode_t mode)
 
     /* Get a new free inode */
     ino = get_free_inode(sbi);
+    printk("ino: %u", ino);
     if (!ino)
         return ERR_PTR(-ENOSPC);
 
@@ -218,18 +248,12 @@ put_ino:
     return ERR_PTR(ret);
 }
 
-/*
- * Create a file or directory in this way:
- *   - check filename length and if the parent directory is not full
- *   - create the new inode (allocate inode and blocks)
- *   - cleanup index block of the new inode
- *   - add new file/directory in parent index
- */
 static int simplefs_create(struct inode *dir,
                            struct dentry *dentry,
                            umode_t mode,
                            bool excl)
 {
+    //dump_stack();
     struct super_block *sb;
     struct inode *inode;
     struct simplefs_inode_info *ci_dir;
@@ -244,6 +268,13 @@ static int simplefs_create(struct inode *dir,
 
     /* Read parent directory index */
     ci_dir = SIMPLEFS_INODE(dir);
+    printk("dir: %p", dir);
+    printk("ci_dir: %p", ci_dir);
+    printk("vfs: %p", &ci_dir->vfs_inode);
+    printk("simplefs_create ci_dir: %u", ci_dir->dir_block);
+    printk("simplefs_create ci_dir i_mode: %u", dir->i_mode);
+    //printBytes((unsigned char *)ci_dir, 320);
+
     sb = dir->i_sb;
     bh = sb_bread(sb, ci_dir->dir_block);
     if (!bh)

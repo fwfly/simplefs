@@ -19,6 +19,7 @@ static int simplefs_file_get_block(struct inode *inode,
                                    struct buffer_head *bh_result,
                                    int create)
 {
+    printk("simplefs_file_get_block");
     struct super_block *sb = inode->i_sb;
     struct simplefs_sb_info *sbi = SIMPLEFS_SB(sb);
     struct simplefs_inode_info *ci = SIMPLEFS_INODE(inode);
@@ -83,6 +84,7 @@ brelse_index:
  */
 static int simplefs_readpage(struct file *file, struct page *page)
 {
+    printk("simplefs_readpage");
     return mpage_readpage(page, simplefs_file_get_block);
 }
 
@@ -92,6 +94,7 @@ static int simplefs_readpage(struct file *file, struct page *page)
  */
 static int simplefs_writepage(struct page *page, struct writeback_control *wbc)
 {
+    printk("simplefs_writepage");
     return block_write_full_page(page, simplefs_file_get_block, wbc);
 }
 
@@ -108,6 +111,8 @@ static int simplefs_write_begin(struct file *file,
                                 struct page **pagep,
                                 void **fsdata)
 {
+    dump_stack();
+    printk("simplefs_write_begin");
     struct simplefs_sb_info *sbi = SIMPLEFS_SB(file->f_inode->i_sb);
     int err;
     uint32_t nr_allocs = 0;
@@ -150,6 +155,8 @@ static int simplefs_write_end(struct file *file,
     struct super_block *sb = inode->i_sb;
     uint32_t nr_blocks_old;
 
+
+    printk("simplefs_write_end");
     /* Complete the write() */
     int ret = generic_write_end(file, mapping, pos, len, copied, page, fsdata);
     if (ret < len) {

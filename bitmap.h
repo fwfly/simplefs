@@ -35,6 +35,11 @@ static inline uint32_t get_first_free_bits(unsigned long *freemap,
 static inline uint32_t get_free_inode(struct simplefs_sb_info *sbi)
 {
     uint32_t ret = get_first_free_bits(sbi->ifree_bitmap, sbi->nr_inodes, 1);
+    uint32_t i = 0;
+    for (i = 0; i < 10; i++)
+    {
+        printk("%ld", *sbi->ifree_bitmap >> i & 1);
+    }
     if (ret)
         sbi->nr_free_inodes--;
     return ret;
@@ -74,6 +79,13 @@ static inline void put_inode(struct simplefs_sb_info *sbi, uint32_t ino)
 {
     if (put_free_bits(sbi->ifree_bitmap, sbi->nr_inodes, ino, 1))
         return;
+
+    uint32_t i = 0; 
+    printk("put_inode");
+    for (i = 0; i < 10; i++)
+    {   
+        printk("%ld", *sbi->ifree_bitmap >> i & 1);
+    }
 
     sbi->nr_free_inodes++;
 }

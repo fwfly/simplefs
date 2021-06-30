@@ -100,6 +100,18 @@ static int write_inode_store(int fd, struct superblock *sb)
     inode->i_nlink = htole32(2);
     inode->dir_block = htole32(first_data_block);
 
+    /*inode->i_uid = 95;
+    inode->i_gid = 96;
+    inode->i_size = htole32(SIMPLEFS_BLOCK_SIZE-1 );
+    inode->i_ctime = inode->i_atime = inode->i_mtime = htole32(97);
+    inode->i_blocks = htole32(98);
+    inode->i_nlink = htole32(99);
+    inode->dir_block = htole32(100);
+    inode->i_data[0] = 'A';*/
+    inode->i_data[30] = 'Y';
+    inode->i_data[31] = 'Z';
+
+    printf("char=%lu bytes\n", sizeof(char));
     int ret = write(fd, block, SIMPLEFS_BLOCK_SIZE);
     if (ret != SIMPLEFS_BLOCK_SIZE) {
         ret = -1;

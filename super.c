@@ -13,6 +13,7 @@ static struct kmem_cache *simplefs_inode_cache;
 
 int simplefs_init_inode_cache(void)
 {
+    printk("simplefs_init_inode_cache");
     simplefs_inode_cache = kmem_cache_create(
         "simplefs_cache", sizeof(struct simplefs_inode_info), 0, 0, NULL);
     if (!simplefs_inode_cache)
@@ -27,6 +28,7 @@ void simplefs_destroy_inode_cache(void)
 
 static struct inode *simplefs_alloc_inode(struct super_block *sb)
 {
+    printk("simplefs_alloc_inode");
     struct simplefs_inode_info *ci =
         kmem_cache_alloc(simplefs_inode_cache, GFP_KERNEL);
     if (!ci)
@@ -38,6 +40,7 @@ static struct inode *simplefs_alloc_inode(struct super_block *sb)
 
 static void simplefs_destroy_inode(struct inode *inode)
 {
+    printk("simplefs_destroy_inode");
     struct simplefs_inode_info *ci = SIMPLEFS_INODE(inode);
     kmem_cache_free(simplefs_inode_cache, ci);
 }
@@ -45,6 +48,7 @@ static void simplefs_destroy_inode(struct inode *inode)
 static int simplefs_write_inode(struct inode *inode,
                                 struct writeback_control *wbc)
 {
+    printk("simplefs_write_inode");
     struct simplefs_inode *disk_inode;
     struct simplefs_inode_info *ci = SIMPLEFS_INODE(inode);
     struct super_block *sb = inode->i_sb;
@@ -96,6 +100,7 @@ static void simplefs_put_super(struct super_block *sb)
 
 static int simplefs_sync_fs(struct super_block *sb, int wait)
 {
+    printk("simplefs_sync_fs");
     struct simplefs_sb_info *sbi = SIMPLEFS_SB(sb);
     struct simplefs_sb_info *disk_sb;
     int i;
@@ -159,6 +164,7 @@ static int simplefs_sync_fs(struct super_block *sb, int wait)
 
 static int simplefs_statfs(struct dentry *dentry, struct kstatfs *stat)
 {
+    printk("simplefs_statfs");
     struct super_block *sb = dentry->d_sb;
     struct simplefs_sb_info *sbi = SIMPLEFS_SB(sb);
 
@@ -186,6 +192,7 @@ static struct super_operations simplefs_super_ops = {
 /* Fill the struct superblock from partition superblock */
 int simplefs_fill_super(struct super_block *sb, void *data, int silent)
 {
+    printk("simplefs_fill_super-0.0.1");
     struct buffer_head *bh = NULL;
     struct simplefs_sb_info *csb = NULL;
     struct simplefs_sb_info *sbi = NULL;
